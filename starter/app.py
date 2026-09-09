@@ -57,6 +57,7 @@ def check_solution():
         'incorrect': incorrect,
         'conflicts': conflicts,
         'solved': not incorrect and not conflicts,
+        'hints_used': CURRENT['hints_used'],
     })
 
 

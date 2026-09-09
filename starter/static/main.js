@@ -3,6 +3,37 @@ const SIZE = 9;
 let puzzle = [];
 let lockedCells = new Set();
 let hintsUsed = 0;
+let timerInterval = null;
+let timerStartedAt = 0;
+let elapsedSeconds = 0;
+let completionRecorded = false;
+
+function formatElapsedTime(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+  const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
+function updateTimer() {
+  elapsedSeconds = Math.floor((Date.now() - timerStartedAt) / 1000);
+  document.getElementById('timer').innerText = formatElapsedTime(elapsedSeconds);
+}
+
+function startTimer() {
+  stopTimer();
+  elapsedSeconds = 0;
+  timerStartedAt = Date.now();
+  updateTimer();
+  timerInterval = setInterval(updateTimer, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval !== null) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  if (timerStartedAt) updateTimer();
+}
 
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
@@ -57,6 +88,8 @@ async function newGame() {
   const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`);
   const data = await res.json();
   renderPuzzle(data.puzzle, data.locked);
+  completionRecorded = false;
+  startTimer();
   document.getElementById('message').innerText = '';
 }
 
@@ -98,8 +131,18 @@ async function checkSolution() {
     }
   }
   if (data.solved) {
+    stopTimer();
+    if (!completionRecorded) {
+      completionRecorded = true;
+      addLeaderboardScore({
+        name: document.getElementById('player-name').value.trim() || 'Anonymous',
+        time: elapsedSeconds,
+        difficulty: document.getElementById('difficulty').value,
+        hints: data.hints_used
+      });
+    }
     msg.style.color = '#388e3c';
-    msg.innerText = 'Congratulations! You solved it!';
+    msg.innerText = `Congratulations! You solved it in ${formatElapsedTime(elapsedSeconds)}!`;
   } else {
     msg.style.color = '#d32f2f';
     msg.innerText = 'Some cells are incorrect.';
@@ -141,6 +184,7 @@ window.addEventListener('load', () => {
   document.getElementById('new-game').addEventListener('click', newGame);
   document.getElementById('check-solution').addEventListener('click', checkSolution);
   document.getElementById('hint').addEventListener('click', requestHint);
+  renderLeaderboard();
   // initialize
   newGame();
 });

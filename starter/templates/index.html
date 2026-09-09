@@ -20,6 +20,26 @@
     <button id="hint">Hint</button>
     <span id="message"></span>
   </div>
+  <div class="game-status">
+    <strong>Time: <span id="timer">00:00</span></strong>
+    <label for="player-name">Player name</label>
+    <input id="player-name" type="text" maxlength="30" placeholder="Anonymous">
+  </div>
+  <section id="leaderboard" aria-labelledby="leaderboard-title">
+    <h2 id="leaderboard-title">Top 10 Scores</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Time</th>
+          <th>Difficulty</th>
+          <th>Hints</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </section>
+  <script src="/static/leaderboard.js"></script>
   <script src="/static/main.js"></script>
 </body>
 </html>

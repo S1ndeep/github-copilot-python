@@ -167,7 +167,22 @@ def test_check_accepts_the_stored_solution(client):
     response = client.post('/check', json={'board': copy.deepcopy(CURRENT['solution'])})
 
     assert response.status_code == 200
-    assert response.get_json() == {'incorrect': [], 'conflicts': [], 'solved': True}
+    assert response.get_json() == {
+        'incorrect': [],
+        'conflicts': [],
+        'solved': True,
+        'hints_used': 0,
+    }
+
+
+def test_new_game_resets_hint_count(client):
+    client.get('/new')
+    client.post('/hint', json={'board': copy.deepcopy(CURRENT['puzzle'])})
+
+    response = client.get('/new')
+
+    assert response.get_json()['hints_used'] == 0
+    assert CURRENT['hints_used'] == 0
 
 
 def test_check_identifies_incorrect_entries_without_flagging_correct_entries(client):
