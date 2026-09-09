@@ -33,6 +33,55 @@ def test_generate_puzzle_returns_a_valid_board_and_solution():
         == list(range(1, sudoku_logic.SIZE + 1))
         for column in range(sudoku_logic.SIZE)
     )
+    assert sudoku_logic.count_solutions(puzzle) == 1
+
+
+def test_solver_finds_the_unique_solution_for_a_known_puzzle():
+    puzzle = [
+        [5, 3, 0, 0, 7, 0, 0, 0, 0],
+        [6, 0, 0, 1, 9, 5, 0, 0, 0],
+        [0, 9, 8, 0, 0, 0, 0, 6, 0],
+        [8, 0, 0, 0, 6, 0, 0, 0, 3],
+        [4, 0, 0, 8, 0, 3, 0, 0, 1],
+        [7, 0, 0, 0, 2, 0, 0, 0, 6],
+        [0, 6, 0, 0, 0, 0, 2, 8, 0],
+        [0, 0, 0, 4, 1, 9, 0, 0, 5],
+        [0, 0, 0, 0, 8, 0, 0, 7, 9],
+    ]
+    solution = [
+        [5, 3, 4, 6, 7, 8, 9, 1, 2],
+        [6, 7, 2, 1, 9, 5, 3, 4, 8],
+        [1, 9, 8, 3, 4, 2, 5, 6, 7],
+        [8, 5, 9, 7, 6, 1, 4, 2, 3],
+        [4, 2, 6, 8, 5, 3, 7, 9, 1],
+        [7, 1, 3, 9, 2, 4, 8, 5, 6],
+        [9, 6, 1, 5, 3, 7, 2, 8, 4],
+        [2, 8, 7, 4, 1, 9, 6, 3, 5],
+        [3, 4, 5, 2, 8, 6, 1, 7, 9],
+    ]
+
+    assert sudoku_logic.count_solutions(puzzle) == 1
+    assert sudoku_logic.solve_board(puzzle) == solution
+
+
+def test_solver_stops_after_finding_multiple_solutions():
+    puzzle = sudoku_logic.create_empty_board()
+
+    assert sudoku_logic.count_solutions(puzzle) == 2
+
+
+def test_solver_returns_no_solution_for_invalid_or_unsolvable_boards():
+    invalid_board = sudoku_logic.create_empty_board()
+    invalid_board[0][0] = 1
+    invalid_board[0][1] = 1
+    unsolvable_board = sudoku_logic.create_empty_board()
+    unsolvable_board[0] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    unsolvable_board[1][0] = 1
+
+    assert sudoku_logic.count_solutions(invalid_board) == 0
+    assert sudoku_logic.solve_board(invalid_board) is None
+    assert sudoku_logic.count_solutions(unsolvable_board) == 0
+    assert sudoku_logic.solve_board(unsolvable_board) is None
 
 
 def test_index_renders_the_game_page(client):
