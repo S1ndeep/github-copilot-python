@@ -1,60 +1,128 @@
-# Refactor a Sudoku Game written in Python Flask
+# Sudoku Game
 
-Use this simple Sudoku game as a starting point to practice your skills with GitHub Copilot. The goal is to refactor the code to use modern technologies, while also adding new features and improving the overall user experience.
+A Flask-backed Sudoku game with generated puzzles, server-side solution checking, hints, a timer, a persistent local leaderboard, and a responsive browser UI.
 
-## Getting Started
+## Features
 
-Follow these instructions to get a copy of the project up and running on your local machine.
+- Easy, Medium, and Hard difficulty levels.
+- Puzzle generation with unique-solution validation.
+- Locked prefilled cells that cannot be edited.
+- Check Solution button for comparing entries with the solution.
+- Hint button that fills and locks a correct cell.
+- Conflict feedback for duplicate values in rows, columns, and 3x3 regions.
+- Incorrect-entry feedback for values that do not match the solution.
+- Timer that starts with a new game and stops after successful completion.
+- Player name input for completed scores.
+- Top 10 leaderboard sorted by completion time.
+- Scores include player name, completion time, difficulty, and hint count.
+- Leaderboard persistence through browser `localStorage`.
+- Dark/light mode toggle with saved theme preference.
+- Responsive desktop, tablet, and mobile layout.
+- Alternating visual treatment for the nine 3x3 Sudoku regions.
 
-### Dependencies
+## Project Structure
 
+```text
+.
+├── pytest.ini
+├── README.md
+└── starter/
+	├── app.py
+	├── requirements.txt
+	├── sudoku_logic.py
+	├── static/
+	│   ├── leaderboard.js
+	│   ├── main.js
+	│   └── styles.css
+	├── templates/
+	│   └── index.html
+	└── tests/
+		├── leaderboard.test.js
+		└── test_legacy_behavior.py
 ```
-- Modern web browser (Chrome, Firefox, Edge, etc.)
-- Python 3
+
+`starter/app.py` is the Flask entry point. `starter/sudoku_logic.py` contains board validation, puzzle generation, solving, and conflict detection. The browser interface is defined by `starter/templates/index.html` and the files in `starter/static/`.
+
+## Requirements
+
+- Python 3.8 or newer.
+- A modern web browser with JavaScript and `localStorage` support.
+- Python packages listed in `starter/requirements.txt`: Flask and pytest.
+- Node.js is optional and is only required for the standalone leaderboard tests.
+
+## Setup and Installation
+
+From the repository root, create a virtual environment:
+
+```powershell
+python -m venv .venv
 ```
 
-### Installation
+Activate it in PowerShell:
 
-1. Fork this repository to your GitHub account. (You can use the "Fork" button on the top right corner of the repository page.)
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
-2. Clone your forked repository to your local machine.
-
-3. Open a terminal window and navigate to the "github-copilot-python/starter" directory.
-
-4. Create a Python virtual environment and activate it (optional but highly recommended).
+On macOS or Linux, use:
 
 ```bash
-python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-5. Install required Python packages.
+Install the project dependencies:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r starter/requirements.txt
 ```
 
-6. Run the Flask app.
+## Run the Application
+
+From the repository root, run:
 
 ```bash
-python app.py
+python starter/app.py
 ```
 
-7. Open http://127.0.0.1:5000 in your browser.
+Then open <http://127.0.0.1:5000> in a browser.
 
-## Project Instructions
+## How to Play
 
-Use GitHub Copilot to refactor the code for this game to add more advanced features. The goal is to create a more modern and maintainable codebase and add additional functionality to the final product. You can use any combination of code completion and chat features, like Ask, Edit, or Agent modes.
+1. Select Easy, Medium, or Hard.
+2. Click **New Game**. A new puzzle starts the timer and resets the hint count.
+3. Enter digits from 1 through 9 in the editable cells. Prefilled and hinted cells are locked.
+4. Click **Check Solution** to see incorrect entries and Sudoku conflicts.
+5. Correct highlighted cells or click **Hint** to fill and lock one correct unsolved cell.
+6. Complete every cell correctly and click **Check Solution**. The timer stops and the completed game can be added to the leaderboard.
 
-- Errors should be handled gracefully with appropriate messages to the user.
-- Implement a Sudoku board generator that creates a valid Sudoku puzzle with a unique solution.
-- Add a timer to track how long it takes to solve the puzzle.
-- Implement a solution checker that verifies if the user's solution is correct using event delegation.
-- Add a difficulty selector to allow users to choose between easy, medium, and hard puzzles.
-- Add a hint feature that provides clues for the user that are noted with unique colors.
-- Add a check puzzle button that checks the current state of the board against the solution.
-- User should get immediate feedback on their input, such as highlighting invalid entries.
-- Top 10 scores should be saved in local storage and displayed on the page with the user's name, time taken, hints used, and difficulty level.
-- The game should be responsive and work well on both desktop and mobile devices.
-- UI colors should be visually appealing and accessible.
-- Completed and correct puzzles should display a congratulatory message with the time taken and hints used and ask for the user's name for Top 10 times.
+## Leaderboard
+
+Only successfully completed games are recorded. The player name, elapsed time, selected difficulty, and number of hints used are stored as a score. Scores are sorted from the lowest completion time to the highest, and only the ten best scores are retained.
+
+Scores are stored in browser `localStorage` under the key `sudoku.top10Scores.v1`. Invalid or corrupted stored data is ignored so it does not prevent the game from loading. Repeated checks after completing the same puzzle do not add duplicate scores.
+
+## Dark and Light Mode
+
+Use the **Dark mode** or **Light mode** button in the page header. The selected theme is stored in browser `localStorage` under `sudoku.theme.v1` and is restored when the application is reopened. Switching themes does not start a new game or reset the current timer.
+
+## Testing
+
+Run the complete Python test suite from the repository root:
+
+```bash
+python -m pytest
+```
+
+The suite covers the Flask routes, puzzle generation and unique solutions, difficulty levels, locked cells, hints, solution checking, and conflict detection.
+
+The isolated browser leaderboard module also has optional dependency-free Node.js tests:
+
+```bash
+node --test starter/tests/leaderboard.test.js
+```
+
+The Node tests cover leaderboard sorting, the Top 10 limit, score metadata, persistence, and corrupted `localStorage` data.
+
+## Copilot Development Instructions
+
+No `instruction.md` file is currently present in this repository. The original project guidance is retained in the repository history and the current implementation is documented here. `pytest.ini` contains the test import-path configuration that allows the exact command `python -m pytest` to run from the repository root.
