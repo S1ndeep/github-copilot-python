@@ -4,12 +4,28 @@ import random
 SIZE = 9
 EMPTY = 0
 MAX_GENERATION_ATTEMPTS = 100
+DIFFICULTY_CLUES = {
+    'Easy': 45,
+    'Medium': 35,
+    'Hard': 30,
+}
 
 def deep_copy(board):
     return copy.deepcopy(board)
 
 def create_empty_board():
     return [[EMPTY for _ in range(SIZE)] for _ in range(SIZE)]
+
+
+def get_locked_cells(board):
+    if not is_valid_board(board):
+        raise ValueError('board must be a valid Sudoku board')
+    return [
+        [row, col]
+        for row in range(SIZE)
+        for col in range(SIZE)
+        if board[row][col] != EMPTY
+    ]
 
 def is_safe(board, row, col, num):
     # Check row and column
@@ -56,6 +72,38 @@ def is_valid_board(board):
                 return False
 
     return True
+
+
+def find_conflicts(board):
+    conflicts = set()
+    if not isinstance(board, (list, tuple)) or len(board) != SIZE:
+        return []
+    if any(not isinstance(row, (list, tuple)) or len(row) != SIZE for row in board):
+        return []
+
+    def mark_duplicates(cells):
+        values = {}
+        for row, col in cells:
+            value = board[row][col]
+            if type(value) is not int or value < EMPTY or value > SIZE:
+                conflicts.add((row, col))
+            elif value != EMPTY:
+                values.setdefault(value, []).append((row, col))
+        for duplicate_cells in values.values():
+            if len(duplicate_cells) > 1:
+                conflicts.update(duplicate_cells)
+
+    for index in range(SIZE):
+        mark_duplicates([(index, col) for col in range(SIZE)])
+        mark_duplicates([(row, index) for row in range(SIZE)])
+    for start_row in range(0, SIZE, 3):
+        for start_col in range(0, SIZE, 3):
+            mark_duplicates([
+                (row, col)
+                for row in range(start_row, start_row + 3)
+                for col in range(start_col, start_col + 3)
+            ])
+    return [[row, col] for row, col in sorted(conflicts)]
 
 def fill_board(board):
     for row in range(SIZE):
@@ -141,6 +189,22 @@ def remove_cells(board, clues):
             board[row][col] = EMPTY
             attempts -= 1
 
+
+def remove_cells_preserving_uniqueness(board, clues):
+    cells = [(row, col) for row in range(SIZE) for col in range(SIZE)]
+    random.shuffle(cells)
+    filled_cells = SIZE * SIZE
+    for row, col in cells:
+        if filled_cells <= clues:
+            break
+        value = board[row][col]
+        board[row][col] = EMPTY
+        if count_solutions(board) == 1:
+            filled_cells -= 1
+        else:
+            board[row][col] = value
+    return filled_cells == clues
+
 def generate_puzzle(clues=35):
     if not isinstance(clues, int) or isinstance(clues, bool) or not 0 <= clues <= SIZE * SIZE:
         raise ValueError(f'clues must be between 0 and {SIZE * SIZE}')
@@ -149,9 +213,16 @@ def generate_puzzle(clues=35):
         board = create_empty_board()
         fill_board(board)
         solution = deep_copy(board)
-        remove_cells(board, clues)
+        if not remove_cells_preserving_uniqueness(board, clues):
+            continue
         puzzle = deep_copy(board)
         if count_solutions(puzzle) == 1:
             return puzzle, solution
 
     raise RuntimeError('Unable to generate a puzzle with a unique solution')
+
+
+def generate_puzzle_for_difficulty(difficulty):
+    if difficulty not in DIFFICULTY_CLUES:
+        raise ValueError(f'difficulty must be one of {", ".join(DIFFICULTY_CLUES)}')
+    return generate_puzzle(DIFFICULTY_CLUES[difficulty])

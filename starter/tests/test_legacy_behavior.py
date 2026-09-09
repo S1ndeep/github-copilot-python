@@ -11,10 +11,14 @@ def client():
     app.config.update(TESTING=True)
     CURRENT['puzzle'] = None
     CURRENT['solution'] = None
+    CURRENT['locked'] = []
+    CURRENT['hints_used'] = 0
     with app.test_client() as test_client:
         yield test_client
     CURRENT['puzzle'] = None
     CURRENT['solution'] = None
+    CURRENT['locked'] = []
+    CURRENT['hints_used'] = 0
 
 
 def test_generate_puzzle_returns_a_valid_board_and_solution():
@@ -34,6 +38,32 @@ def test_generate_puzzle_returns_a_valid_board_and_solution():
         for column in range(sudoku_logic.SIZE)
     )
     assert sudoku_logic.count_solutions(puzzle) == 1
+
+
+@pytest.mark.parametrize('difficulty', ['Easy', 'Medium', 'Hard'])
+def test_difficulty_levels_are_supported_and_generate_unique_puzzles(difficulty):
+    puzzle, solution = sudoku_logic.generate_puzzle_for_difficulty(difficulty)
+
+    assert sudoku_logic.count_solutions(puzzle) == 1
+    assert solution == sudoku_logic.solve_board(puzzle)
+
+
+def test_difficulty_levels_have_decreasing_prefilled_cell_counts():
+    easy, _ = sudoku_logic.generate_puzzle_for_difficulty('Easy')
+    medium, _ = sudoku_logic.generate_puzzle_for_difficulty('Medium')
+    hard, _ = sudoku_logic.generate_puzzle_for_difficulty('Hard')
+
+    count_filled = lambda board: sum(cell != sudoku_logic.EMPTY for row in board for cell in row)
+    assert count_filled(easy) > count_filled(medium) > count_filled(hard)
+
+
+def test_prefilled_cells_are_identified_as_locked():
+    puzzle, _ = sudoku_logic.generate_puzzle_for_difficulty('Easy')
+
+    locked = sudoku_logic.get_locked_cells(puzzle)
+
+    assert len(locked) == sudoku_logic.DIFFICULTY_CLUES['Easy']
+    assert all(puzzle[row][col] != sudoku_logic.EMPTY for row, col in locked)
 
 
 def test_solver_finds_the_unique_solution_for_a_known_puzzle():
@@ -102,6 +132,28 @@ def test_new_game_returns_a_puzzle_and_stores_its_solution(client):
     assert CURRENT['solution'] is not None
 
 
+def test_new_game_supports_named_difficulty_and_returns_locked_cells(client):
+    response = client.get('/new?difficulty=Hard')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data['locked']) == sudoku_logic.DIFFICULTY_CLUES['Hard']
+    assert data['locked'] == sudoku_logic.get_locked_cells(data['puzzle'])
+
+
+def test_check_rejects_changes_to_locked_cells(client):
+    client.get('/new?difficulty=Easy')
+    board = copy.deepcopy(CURRENT['solution'])
+    row, col = sudoku_logic.get_locked_cells(CURRENT['puzzle'])[0]
+    board[row][col] = (board[row][col] % sudoku_logic.SIZE) + 1
+
+    response = client.post('/check', json={'board': board})
+
+    assert response.status_code == 400
+    assert response.get_json()['error'] == 'Locked cells cannot be changed'
+    assert [row, col] in response.get_json()['locked']
+
+
 def test_check_returns_an_error_when_no_game_is_in_progress(client):
     response = client.post('/check', json={'board': sudoku_logic.create_empty_board()})
 
@@ -115,15 +167,82 @@ def test_check_accepts_the_stored_solution(client):
     response = client.post('/check', json={'board': copy.deepcopy(CURRENT['solution'])})
 
     assert response.status_code == 200
-    assert response.get_json() == {'incorrect': []}
+    assert response.get_json() == {'incorrect': [], 'conflicts': [], 'solved': True}
+
+
+def test_check_identifies_incorrect_entries_without_flagging_correct_entries(client):
+    client.get('/new')
+    board = copy.deepcopy(CURRENT['solution'])
+    incorrect_row, incorrect_col = next(
+        (row, col)
+        for row in range(sudoku_logic.SIZE)
+        for col in range(sudoku_logic.SIZE)
+        if CURRENT['puzzle'][row][col] == sudoku_logic.EMPTY
+    )
+    correct_row, correct_col = next(
+        (row, col)
+        for row in range(sudoku_logic.SIZE)
+        for col in range(sudoku_logic.SIZE)
+        if CURRENT['puzzle'][row][col] == sudoku_logic.EMPTY
+        and (row, col) != (incorrect_row, incorrect_col)
+    )
+    board[incorrect_row][incorrect_col] = (board[incorrect_row][incorrect_col] % sudoku_logic.SIZE) + 1
+
+    response = client.post('/check', json={'board': board})
+
+    data = response.get_json()
+    assert [incorrect_row, incorrect_col] in data['incorrect']
+    assert [correct_row, correct_col] not in data['incorrect']
+    assert [incorrect_row, incorrect_col] in data['conflicts']
+
+
+def test_hint_fills_and_locks_a_cell_and_increments_count(client):
+    client.get('/new')
+    board = copy.deepcopy(CURRENT['puzzle'])
+    response = client.post('/hint', json={'board': board})
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert data['value'] == CURRENT['solution'][data['row']][data['col']]
+    assert [data['row'], data['col']] in data['locked']
+    assert data['hints_used'] == 1
+
+
+def test_hint_does_not_modify_prefilled_cells(client):
+    client.get('/new')
+    board = copy.deepcopy(CURRENT['solution'])
+
+    response = client.post('/hint', json={'board': board})
+
+    assert response.status_code == 400
+    assert response.get_json()['hints_used'] == 0
+
+
+def test_conflicts_are_detected_in_rows_columns_and_regions():
+    board = sudoku_logic.create_empty_board()
+    board[0][0] = 1
+    board[0][1] = 1
+    board[1][0] = 1
+
+    conflicts = sudoku_logic.find_conflicts(board)
+
+    assert [0, 0] in conflicts
+    assert [0, 1] in conflicts
+    assert [1, 0] in conflicts
 
 
 def test_check_reports_incorrect_cells(client):
     client.get('/new')
     board = copy.deepcopy(CURRENT['solution'])
-    board[0][0] = sudoku_logic.EMPTY
+    row, col = next(
+        (row, col)
+        for row in range(sudoku_logic.SIZE)
+        for col in range(sudoku_logic.SIZE)
+        if CURRENT['puzzle'][row][col] == sudoku_logic.EMPTY
+    )
+    board[row][col] = sudoku_logic.EMPTY
 
     response = client.post('/check', json={'board': board})
 
     assert response.status_code == 200
-    assert [0, 0] in response.get_json()['incorrect']
+    assert [row, col] in response.get_json()['incorrect']
