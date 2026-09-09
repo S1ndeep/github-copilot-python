@@ -120,6 +120,8 @@ def test_index_renders_the_game_page(client):
     assert response.status_code == 200
     assert b'Sudoku Game' in response.data
     assert b'id="sudoku-board"' in response.data
+    assert b'id="theme-toggle"' in response.data
+    assert b'id="leaderboard-body"' in response.data
 
 
 def test_new_game_returns_a_puzzle_and_stores_its_solution(client):

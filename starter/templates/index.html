@@ -6,39 +6,49 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <h1>Sudoku Game</h1>
-  <div id="sudoku-board"></div>
-  <div class="controls">
-    <label for="difficulty">Difficulty</label>
-    <select id="difficulty">
-      <option value="Easy">Easy</option>
-      <option value="Medium" selected>Medium</option>
-      <option value="Hard">Hard</option>
-    </select>
-    <button id="new-game">New Game</button>
-    <button id="check-solution">Check Solution</button>
-    <button id="hint">Hint</button>
-    <span id="message"></span>
-  </div>
-  <div class="game-status">
-    <strong>Time: <span id="timer">00:00</span></strong>
-    <label for="player-name">Player name</label>
-    <input id="player-name" type="text" maxlength="30" placeholder="Anonymous">
-  </div>
-  <section id="leaderboard" aria-labelledby="leaderboard-title">
-    <h2 id="leaderboard-title">Top 10 Scores</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Player</th>
-          <th>Time</th>
-          <th>Difficulty</th>
-          <th>Hints</th>
-        </tr>
-      </thead>
-      <tbody id="leaderboard-body"></tbody>
-    </table>
-  </section>
+  <main class="app-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Daily puzzle</p>
+        <h1>Sudoku Game</h1>
+      </div>
+      <button id="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+    </header>
+    <div id="sudoku-board" aria-label="Sudoku puzzle"></div>
+    <section class="controls" aria-label="Game controls">
+      <label for="difficulty">Difficulty</label>
+      <select id="difficulty">
+        <option value="Easy">Easy</option>
+        <option value="Medium" selected>Medium</option>
+        <option value="Hard">Hard</option>
+      </select>
+      <button id="new-game" type="button">New Game</button>
+      <button id="check-solution" type="button">Check Solution</button>
+      <button id="hint" type="button">Hint</button>
+      <span id="message" role="status" aria-live="polite"></span>
+    </section>
+    <section class="game-status" aria-label="Current game status">
+      <strong>Time: <span id="timer">00:00</span></strong>
+      <label for="player-name">Player name</label>
+      <input id="player-name" type="text" maxlength="30" placeholder="Anonymous">
+    </section>
+    <section id="leaderboard" aria-labelledby="leaderboard-title">
+      <h2 id="leaderboard-title">Top 10 Scores</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Player</th>
+              <th scope="col">Time</th>
+              <th scope="col">Difficulty</th>
+              <th scope="col">Hints</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
   <script src="/static/leaderboard.js"></script>
   <script src="/static/main.js"></script>
 </body>

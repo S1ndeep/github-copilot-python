@@ -1,22 +1,97 @@
+:root {
+    --page-bg: #eef3f7;
+    --surface: #ffffff;
+    --surface-muted: #e5edf2;
+    --text: #17232d;
+    --muted-text: #52616d;
+    --border: #50606c;
+    --cell-bg: #fbfdfe;
+    --region-bg: #e8f2f6;
+    --focus-bg: #d7f1f5;
+    --button-bg: #176b87;
+    --button-hover: #11546b;
+    --button-text: #ffffff;
+    --incorrect-bg: #ffcdd2;
+    --conflict-bg: #ffab91;
+    --prefilled-bg: #d5dee3;
+}
+
+body.dark-mode {
+    --page-bg: #18232b;
+    --surface: #22313a;
+    --surface-muted: #30434e;
+    --text: #f1f6f8;
+    --muted-text: #c1d0d7;
+    --border: #a9c0ca;
+    --cell-bg: #263a44;
+    --region-bg: #304b57;
+    --focus-bg: #38616d;
+    --button-bg: #46a6bd;
+    --button-hover: #6fc3d4;
+    --button-text: #10232b;
+    --incorrect-bg: #9e3d49;
+    --conflict-bg: #a85b39;
+    --prefilled-bg: #536972;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    text-align: center;
     margin: 0;
-    padding: 0;
+    padding: 24px 16px 48px;
+    background: var(--page-bg);
+    color: var(--text);
+    font-family: Arial, sans-serif;
+    text-align: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.app-shell {
+    width: min(100%, 760px);
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 auto 20px;
+    text-align: left;
+}
+
+.eyebrow {
+    margin: 0 0 4px;
+    color: var(--muted-text);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+h1,
+h2 {
+    margin: 0;
 }
 
 h1 {
-    margin-top: 30px;
-    color: #333;
+    font-size: 30px;
+}
+
+h2 {
+    margin-bottom: 12px;
+    font-size: 22px;
 }
 
 #sudoku-board {
     display: inline-block;
-    margin: 30px auto;
-    border: 4px solid #333;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: min(100%, 450px);
+    margin: 4px auto 20px;
+    padding: 3px;
+    border: 4px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 4px 14px rgba(20, 42, 52, 0.16);
 }
 
 .sudoku-row {
@@ -24,96 +99,167 @@ h1 {
 }
 
 .sudoku-cell {
-    width: 40px;
-    height: 40px;
-    border: 1px solid #bbb;
+    width: 11.111%;
+    min-width: 0;
+    aspect-ratio: 1;
+    border: 1px solid var(--border);
+    color: var(--text);
     text-align: center;
     font-size: 20px;
     outline: none;
-    background: #fafafa;
-    transition: background 0.2s;
+    background: var(--cell-bg);
+    transition: background 0.2s, color 0.2s;
 }
 
 .sudoku-cell:focus {
-    background: #e0f7fa;
+    background: var(--focus-bg);
+    box-shadow: inset 0 0 0 2px var(--button-bg);
+}
+
+.sudoku-row:nth-child(-n+3) .sudoku-cell:nth-child(n+4):nth-child(-n+6),
+.sudoku-row:nth-child(n+4):nth-child(-n+6) .sudoku-cell:nth-child(-n+3),
+.sudoku-row:nth-child(n+4):nth-child(-n+6) .sudoku-cell:nth-child(n+7),
+.sudoku-row:nth-child(n+7) .sudoku-cell:nth-child(n+4):nth-child(-n+6) {
+    background: var(--region-bg);
 }
 
 .sudoku-cell.prefilled {
-    background: #e0e0e0;
+    background: var(--prefilled-bg);
     font-weight: bold;
-    color: #333;
 }
 
 .sudoku-cell.incorrect {
-    background: #ffcdd2;
+    background: var(--incorrect-bg);
 }
 
 .sudoku-cell.conflict {
-    background: #ffab91;
+    background: var(--conflict-bg);
 }
 
 .sudoku-cell:nth-child(3),
 .sudoku-cell:nth-child(6) {
-    border-right: 3px solid #333;
+    border-right: 3px solid var(--border);
 }
 
 .sudoku-row:nth-child(3) .sudoku-cell,
 .sudoku-row:nth-child(6) .sudoku-cell {
-    border-bottom: 3px solid #333;
+    border-bottom: 3px solid var(--border);
 }
 
-.controls {
-    margin: 20px auto;
+.controls,
+.game-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px auto;
+}
+
+.game-status {
+    color: var(--muted-text);
+}
+
+button,
+select,
+#player-name {
+    min-height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 16px;
 }
 
 button {
-    padding: 8px 18px;
-    margin: 0 8px;
-    font-size: 16px;
-    border: none;
-    background: #1976d2;
-    color: #fff;
-    border-radius: 4px;
+    padding: 8px 16px;
+    background: var(--button-bg);
+    color: var(--button-text);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, color 0.2s;
 }
 
-button:hover {
-    background: #1565c0;
+button:hover,
+button:focus-visible {
+    background: var(--button-hover);
+}
+
+select,
+#player-name {
+    padding: 7px 9px;
+    background: var(--surface);
+    color: var(--text);
+}
+
+select:focus-visible,
+#player-name:focus-visible {
+    outline: 3px solid var(--focus-bg);
+    outline-offset: 1px;
+}
+
+#theme-toggle {
+    flex: 0 0 auto;
 }
 
 #message {
-    margin-left: 20px;
-    font-size: 16px;
-    color: #d32f2f;
-}
-
-.game-status,
-#leaderboard {
-    margin: 20px auto;
-}
-
-.game-status label {
-    margin-left: 20px;
-}
-
-#player-name {
-    padding: 7px;
-    font-size: 16px;
+    flex: 1 1 100%;
+    min-height: 22px;
+    color: var(--muted-text);
 }
 
 #leaderboard {
-    max-width: 700px;
+    margin: 28px auto 0;
+    text-align: left;
+}
+
+.table-wrap {
+    overflow-x: auto;
 }
 
 #leaderboard table {
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
+    background: var(--surface);
 }
 
 #leaderboard th,
 #leaderboard td {
-    padding: 8px;
-    border: 1px solid #bbb;
+    padding: 9px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-align: left;
+}
+
+#leaderboard th {
+    background: var(--surface-muted);
+}
+
+@media (max-width: 560px) {
+    body {
+        padding: 16px 10px 32px;
+    }
+
+    .page-header {
+        align-items: center;
+    }
+
+    h1 {
+        font-size: 26px;
+    }
+
+    .sudoku-cell {
+        font-size: 18px;
+    }
+
+    .controls > button,
+    .controls > select,
+    .game-status > input {
+        flex: 1 1 calc(50% - 10px);
+    }
+
+    .game-status label {
+        flex: 1 1 100%;
+    }
+
+    .game-status > input {
+        width: 100%;
+    }
 }
