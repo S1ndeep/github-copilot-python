@@ -213,6 +213,23 @@ def test_check_identifies_incorrect_entries_without_flagging_correct_entries(cli
     assert [incorrect_row, incorrect_col] in data['conflicts']
 
 
+def test_check_marks_every_missing_editable_cell_as_incorrect(client):
+    client.get('/new')
+    board = copy.deepcopy(CURRENT['puzzle'])
+
+    response = client.post('/check', json={'board': board})
+
+    data = response.get_json()
+    editable_cells = [
+        [row, col]
+        for row in range(sudoku_logic.SIZE)
+        for col in range(sudoku_logic.SIZE)
+        if CURRENT['puzzle'][row][col] == sudoku_logic.EMPTY
+    ]
+    assert set(map(tuple, data['incorrect'])) == set(map(tuple, editable_cells))
+    assert not set(map(tuple, sudoku_logic.get_locked_cells(CURRENT['puzzle']))) & set(map(tuple, data['incorrect']))
+
+
 def test_hint_fills_and_locks_a_cell_and_increments_count(client):
     client.get('/new')
     board = copy.deepcopy(CURRENT['puzzle'])

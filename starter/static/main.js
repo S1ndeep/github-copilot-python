@@ -62,6 +62,59 @@ function stopTimer() {
   if (timerStartedAt) updateTimer();
 }
 
+function getBoardFromInputs(inputs) {
+  return Array.from({length: SIZE}, (_, row) =>
+    Array.from({length: SIZE}, (_, col) => {
+      const value = inputs[row * SIZE + col].value;
+      return value ? parseInt(value, 10) : 0;
+    })
+  );
+}
+
+function findConflicts(board) {
+  const conflicts = new Set();
+
+  function markDuplicates(cells) {
+    const values = new Map();
+    cells.forEach(([row, col]) => {
+      const value = board[row][col];
+      if (!value) return;
+      if (!values.has(value)) values.set(value, []);
+      values.get(value).push(row * SIZE + col);
+    });
+    values.forEach((duplicateCells) => {
+      if (duplicateCells.length > 1) {
+        duplicateCells.forEach((cell) => conflicts.add(cell));
+      }
+    });
+  }
+
+  for (let index = 0; index < SIZE; index++) {
+    markDuplicates(Array.from({length: SIZE}, (_, offset) => [index, offset]));
+    markDuplicates(Array.from({length: SIZE}, (_, offset) => [offset, index]));
+  }
+  for (let startRow = 0; startRow < SIZE; startRow += 3) {
+    for (let startCol = 0; startCol < SIZE; startCol += 3) {
+      markDuplicates(
+        Array.from({length: 9}, (_, offset) => [
+          startRow + Math.floor(offset / 3),
+          startCol + offset % 3
+        ])
+      );
+    }
+  }
+  return conflicts;
+}
+
+function updateConflictFeedback(inputs) {
+  const conflicts = findConflicts(getBoardFromInputs(inputs));
+  for (let index = 0; index < inputs.length; index++) {
+    const input = inputs[index];
+    if (input.disabled) continue;
+    input.classList.toggle('conflict', conflicts.has(index));
+  }
+}
+
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
   boardDiv.innerHTML = '';
@@ -78,6 +131,9 @@ function createBoardElement() {
       input.addEventListener('input', (e) => {
         const val = e.target.value.replace(/[^1-9]/g, '');
         e.target.value = val;
+        const inputs = document.getElementById('sudoku-board').getElementsByTagName('input');
+        e.target.classList.remove('incorrect');
+        updateConflictFeedback(inputs);
       });
       rowDiv.appendChild(input);
     }
@@ -123,15 +179,7 @@ async function newGame() {
 async function checkSolution() {
   const boardDiv = document.getElementById('sudoku-board');
   const inputs = boardDiv.getElementsByTagName('input');
-  const board = [];
-  for (let i = 0; i < SIZE; i++) {
-    board[i] = [];
-    for (let j = 0; j < SIZE; j++) {
-      const idx = i * SIZE + j;
-      const val = inputs[idx].value;
-      board[i][j] = val ? parseInt(val, 10) : 0;
-    }
-  }
+  const board = getBoardFromInputs(inputs);
   const res = await fetch('/check', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -179,12 +227,7 @@ async function checkSolution() {
 async function requestHint() {
   const boardDiv = document.getElementById('sudoku-board');
   const inputs = boardDiv.getElementsByTagName('input');
-  const board = Array.from({length: SIZE}, (_, row) =>
-    Array.from({length: SIZE}, (_, col) => {
-      const value = inputs[row * SIZE + col].value;
-      return value ? parseInt(value, 10) : 0;
-    })
-  );
+  const board = getBoardFromInputs(inputs);
   const res = await fetch('/hint', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
