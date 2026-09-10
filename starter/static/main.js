@@ -199,10 +199,10 @@ async function checkSolution() {
     if (inp.disabled) continue;
     inp.className = 'sudoku-cell';
     if (incorrect.has(idx)) {
-      inp.className = 'sudoku-cell incorrect';
+      inp.classList.add('incorrect');
     }
     if (conflicts.has(idx)) {
-      inp.className = 'sudoku-cell conflict';
+      inp.classList.add('conflict');
     }
   }
   if (data.solved) {
